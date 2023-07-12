@@ -6,12 +6,7 @@ from sqlmodel.engine.result import Result, ScalarResult
 from sqlmodel.sql.expression import SelectOfScalar
 
 AtomicPrimaryKey = int | str
-PrimaryKey = (
-    AtomicPrimaryKey
-    | tuple[AtomicPrimaryKey, ...]
-    | list[AtomicPrimaryKey]
-    | Mapping[str, AtomicPrimaryKey]
-)
+PrimaryKey = AtomicPrimaryKey | tuple[AtomicPrimaryKey, ...] | list[AtomicPrimaryKey] | Mapping[str, AtomicPrimaryKey]
 
 T = TypeVar("T")
 TM_1 = TypeVar("TM_1", bound=SQLModel)
@@ -154,9 +149,7 @@ class Service(Generic[TModel, TCreate, TUpdate, TPrimaryKey]):
         ...
 
     @overload
-    def select(
-        self, joined_1: Type[TM_1], joined_2: Type[TM_2], /
-    ) -> SelectOfScalar[tuple[TModel, TM_1, TM_2]]:
+    def select(self, joined_1: Type[TM_1], joined_2: Type[TM_2], /) -> SelectOfScalar[tuple[TModel, TM_1, TM_2]]:
         ...
 
     @overload
