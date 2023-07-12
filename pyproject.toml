@@ -1,4 +1,5 @@
 [project]
+name = "sqlmodelservice"
 readme = "README.md"
 license = { text = "MIT" }
 classifiers = [
