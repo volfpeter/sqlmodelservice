@@ -1,0 +1,94 @@
+[project]
+readme = "README.md"
+license = { text = "MIT" }
+classifiers = [
+    "Intended Audience :: Information Technology",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Development Status :: 4 - Beta",
+    "Topic :: Internet",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Software Development",
+    "Typing :: Typed",
+    "Environment :: Web Environment",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Topic :: Database",
+    "Topic :: Internet :: WWW/HTTP",
+]
+
+[project.urls]
+Homepage = "https://github.com/volfpeter/sqlmodelservice"
+Documentation = "https://volfpeter.github.io/sqlmodelservice"
+
+[tool.poetry]
+name = "sqlmodelservice"
+version = "0.1.0"
+description = "A generic service layer on top of SQLModel for conveniently creating APIs with frameworks like FastAPI."
+authors = ["Peter Volf <do.volfp@gmail.com>"]
+readme = "README.md"
+packages = [{include = "sqlmodelservice"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+sqlmodel = "^0.0.8"
+
+[tool.poetry.group.dev.dependencies]
+black = "^23.7.0"
+mkdocs-material = "^9.1.18"
+mkdocstrings = {extras = ["python"], version = "^0.22.0"}
+mypy = "^1.4.1"
+poethepoet = "^0.21.0"
+pytest = "^7.4.0"
+ruff = "^0.0.277"
+
+[tool.black]
+line-length = 118
+
+[tool.mypy]
+strict = true
+show_error_codes = true
+
+[tool.ruff]
+line-length = 118
+exclude = [
+    ".git",
+    ".mypy_cache",
+    ".pytest_cache",
+    ".ruff_cache",
+    ".venv",
+    "dist",
+    "docs",
+]
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "S",  # flake8-bandit - we must ignore these rules in tests
+    "C",  # flake8-comprehensions
+    "B",  # flake8-bugbear
+]
+ignore = [
+    "E501",  # line too long, handled by black
+    "B008",  # do not perform function calls in argument defaults
+]
+
+[tool.ruff.isort]
+known-third-party = [
+    "sqlmodel",
+]
+
+[tool.poe.tasks]
+serve-docs = "mkdocs serve"
+black = "black ."
+black-check = "black . --check"
+mypy = "mypy ."
+ruff = "ruff check ."
+
+static-checks.sequence =  ["ruff", "black-check", "mypy"]
+static-checks.ignore_fail = "return_non_zero"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
