@@ -1,6 +1,6 @@
 # SQLModelService
 
-`SQLModelService` is a generic service layer on top of `SQLModel` for conveniently creating APIs with frameworks like [FastAPI](https://fastapi.tiangolo.com/).
+`SQLModelService` is a generic service layer on top of [SQLModel](https://sqlmodel.tiangolo.com/) for conveniently creating APIs with frameworks like [FastAPI](https://fastapi.tiangolo.com/).
 
 ## Installation
 
