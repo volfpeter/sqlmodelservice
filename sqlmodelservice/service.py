@@ -246,7 +246,7 @@ class Service(Generic[TModel, TCreate, TUpdate, TPrimaryKey]):
         if isinstance(pk, (str, int)):
             return str(pk)
         elif isinstance(pk, (tuple, list)):
-            return "|".join(str(pk))
+            return "|".join(str(i) for i in pk)
         elif isinstance(pk, dict):
             return "|".join(f"{k}:{v}" for k, v in pk.items())
 
