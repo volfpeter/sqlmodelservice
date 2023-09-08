@@ -1,4 +1,4 @@
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from typing import Any, Generic, Type, TypeVar, overload
 
 from sqlmodel import Session, SQLModel, select
@@ -75,6 +75,31 @@ class Service(Generic[TModel, TCreate, TUpdate, TPrimaryKey]):
         """
         self._model = model
         self._session = session
+
+    def add_to_session(self, items: Sequence[TCreate], *, commit: bool = False) -> list[TModel]:
+        """
+        Adds all items to the session using the same flow as `create()`.
+
+        Note: even if `commit` is `True`, the method *will not perform a refresh* on the items
+        as it has to be done one by one which would be very inefficient with many items.
+
+        Arguments:
+            items: The items to add to the database.
+            commit: Whether to also commit the added items to the database.
+
+        Returns:
+            The list of items that were added to the session.
+
+        Raises:
+            CommitFailed: If the service fails to commit the operation.
+        """
+        session = self._session
+        db_items = [self._prepare_for_create(item) for item in items]
+        session.add_all(db_items)
+        if commit:
+            self._safe_commit("Commit failed.")
+
+        return db_items
 
     def create(self, data: TCreate) -> TModel:
         """
