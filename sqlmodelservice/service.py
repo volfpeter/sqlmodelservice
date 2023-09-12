@@ -80,6 +80,10 @@ class Service(Generic[TModel, TCreate, TUpdate, TPrimaryKey]):
         """
         Adds all items to the session using the same flow as `create()`.
 
+        If `commit` is `True`, the method will commit the transaction even if `items` is empty.
+        The reason for this is to allow chaining `add_to_session()` calls without special
+        attention to when and how the session must be committed at the end.
+
         Note: even if `commit` is `True`, the method *will not perform a refresh* on the items
         as it has to be done one by one which would be very inefficient with many items.
 
