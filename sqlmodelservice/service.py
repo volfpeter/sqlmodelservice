@@ -1,4 +1,4 @@
-from collections.abc import Mapping, Sequence
+from collections.abc import Iterable, Mapping
 from typing import Any, Generic, Type, TypeVar, overload
 
 from sqlmodel import Session, SQLModel, select
@@ -76,7 +76,7 @@ class Service(Generic[TModel, TCreate, TUpdate, TPrimaryKey]):
         self._model = model
         self._session = session
 
-    def add_to_session(self, items: Sequence[TCreate], *, commit: bool = False) -> list[TModel]:
+    def add_to_session(self, items: Iterable[TCreate], *, commit: bool = False) -> list[TModel]:
         """
         Adds all items to the session using the same flow as `create()`.
 
