@@ -1,12 +1,17 @@
-from collections.abc import Iterable, Mapping
+from collections.abc import Iterable, Mapping, Sequence
 from typing import Any, Generic, Type, TypeVar, overload
 
+from sqlalchemy.engine.result import ScalarResult
 from sqlmodel import Session, SQLModel, select
-from sqlmodel.engine.result import Result, ScalarResult
 from sqlmodel.sql.expression import SelectOfScalar
 
 AtomicPrimaryKey = int | str
-PrimaryKey = AtomicPrimaryKey | tuple[AtomicPrimaryKey, ...] | list[AtomicPrimaryKey] | Mapping[str, AtomicPrimaryKey]
+PrimaryKey = (
+    AtomicPrimaryKey
+    | tuple[AtomicPrimaryKey, ...]
+    | list[AtomicPrimaryKey]
+    | Mapping[str, AtomicPrimaryKey]
+)
 
 T = TypeVar("T")
 TM_1 = TypeVar("TM_1", bound=SQLModel)
@@ -76,7 +81,9 @@ class Service(Generic[TModel, TCreate, TUpdate, TPrimaryKey]):
         self._model = model
         self._session = session
 
-    def add_to_session(self, items: Iterable[TCreate], *, commit: bool = False) -> list[TModel]:
+    def add_to_session(
+        self, items: Iterable[TCreate], *, commit: bool = False
+    ) -> list[TModel]:
         """
         Adds all items to the session using the same flow as `create()`.
 
@@ -142,13 +149,13 @@ class Service(Generic[TModel, TCreate, TUpdate, TPrimaryKey]):
         session.delete(item)
         self._safe_commit("Failed to delete item.")
 
-    def exec(self, statement: SelectOfScalar[T]) -> Result[T] | ScalarResult[T]:
+    def exec(self, statement: SelectOfScalar[T]) -> ScalarResult[T]:
         """
         Executes the given statement.
         """
         return self._session.exec(statement)
 
-    def get_all(self) -> list[TModel]:
+    def get_all(self) -> Sequence[TModel]:
         """
         Returns all items from the database.
         """
@@ -178,7 +185,9 @@ class Service(Generic[TModel, TCreate, TUpdate, TPrimaryKey]):
         ...
 
     @overload
-    def select(self, joined_1: Type[TM_1], joined_2: Type[TM_2], /) -> SelectOfScalar[tuple[TModel, TM_1, TM_2]]:
+    def select(
+        self, joined_1: Type[TM_1], joined_2: Type[TM_2], /
+    ) -> SelectOfScalar[tuple[TModel, TM_1, TM_2]]:
         ...
 
     @overload
@@ -290,21 +299,21 @@ class Service(Generic[TModel, TCreate, TUpdate, TPrimaryKey]):
         Arguments:
             data: The model to be created.
         """
-        return self._model.from_orm(data)
+        return self._model.model_validate(data)
 
     def _prepare_for_update(self, data: TUpdate) -> dict[str, Any]:
         """
         Hook that is called before applying the given update.
 
-        The methods role is to convert the given data into a `dict` of
+        The method's role is to convert the given data into a `dict` of
         attribute name - new value pairs, omitting unchanged values.
 
-        The default implementation is `data.dict(exclude_unset=True)`.
+        The default implementation is `data.model_dump(exclude_unset=True)`.
 
         Arguments:
             data: The update data.
         """
-        return data.dict(exclude_unset=True)
+        return data.model_dump(exclude_unset=True)
 
     def _safe_commit(self, error_msg: str) -> None:
         """
