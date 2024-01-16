@@ -24,7 +24,7 @@ Documentation = "https://volfpeter.github.io/sqlmodelservice"
 
 [tool.poetry]
 name = "sqlmodelservice"
-version = "0.2.3"
+version = "0.3.0"
 description = "A generic service layer on top of SQLModel for conveniently creating APIs with frameworks like FastAPI."
 authors = ["Peter Volf <do.volfp@gmail.com>"]
 readme = "README.md"
