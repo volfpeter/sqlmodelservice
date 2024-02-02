@@ -42,5 +42,7 @@ markdown_extensions:
 
 nav:
   - index.md
+  - Examples:
+      - fastapi-example.md
   - API Reference:
       - api-service.md
