@@ -1,10 +1,10 @@
-name: Linters
+name: Tests
 on: push
 jobs:
   Linters:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
+      - name: Check out repository code
         uses: actions/checkout@v4
 
       - name: Setup Python
@@ -16,10 +16,10 @@ jobs:
           python-version-file: pyproject.toml
 
       - name: Install poetry
-        run: python3 -m pip install poetry
+        run: pip install poetry
 
       - name: Install dependencies
         run: poetry install
 
-      - name: Run static checks
-        run: poetry run poe static-checks
+      - name: Run tests
+        run: poetry run poe test

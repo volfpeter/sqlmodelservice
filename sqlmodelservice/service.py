@@ -1,5 +1,5 @@
 from collections.abc import Iterable, Mapping, Sequence
-from typing import Any, Generic, Type, TypeVar, overload
+from typing import Any, Generic, Literal, Type, TypeVar, cast, overload
 
 from sqlalchemy.engine.result import ScalarResult
 from sqlmodel import Session, SQLModel, select
@@ -76,9 +76,28 @@ class Service(Generic[TModel, TCreate, TUpdate, TPrimaryKey]):
         self._model = model
         self._session = session
 
-    def add_to_session(self, items: Iterable[TCreate], *, commit: bool = False) -> list[TModel]:
+    @overload
+    def add_to_session(
+        self, items: Iterable[TCreate], *, commit: bool = False, operation: Literal["create"]
+    ) -> list[TModel]:
+        ...
+
+    @overload
+    def add_to_session(
+        self, items: Iterable[tuple[TModel, TUpdate]], *, commit: bool = False, operation: Literal["update"]
+    ) -> list[TModel]:
+        ...
+
+    def add_to_session(
+        self,
+        items: Iterable[TCreate] | Iterable[tuple[TModel, TUpdate]],
+        *,
+        commit: bool = False,
+        operation: Literal["create", "update"],
+    ) -> list[TModel]:
         """
-        Adds all items to the session using the same flow as `create()`.
+        Adds all items to the session using the same flow as `create()` or `update()`,
+        depending on the selected `operation`.
 
         If `commit` is `True`, the method will commit the transaction even if `items` is empty.
         The reason for this is to allow chaining `add_to_session()` calls without special
@@ -88,8 +107,9 @@ class Service(Generic[TModel, TCreate, TUpdate, TPrimaryKey]):
         as it has to be done one by one which would be very inefficient with many items.
 
         Arguments:
-            items: The items to add to the database.
-            commit: Whether to also commit the added items to the database.
+            items: The items to add to the session.
+            commit: Whether to also commit the changes to the database.
+            operation: The desired operation.
 
         Returns:
             The list of items that were added to the session.
@@ -97,9 +117,16 @@ class Service(Generic[TModel, TCreate, TUpdate, TPrimaryKey]):
         Raises:
             CommitFailed: If the service fails to commit the operation.
         """
-        session = self._session
-        db_items = [self._prepare_for_create(item) for item in items]
-        session.add_all(db_items)
+        if operation == "create":
+            items = cast(Iterable[TCreate], items)
+            db_items = [self._prepare_for_create(item) for item in items]
+        elif operation == "update":
+            items = cast(Iterable[tuple[TModel, TUpdate]], items)
+            db_items = [self._apply_changes_to_item(item, changes) for item, changes in items]
+        else:
+            raise ServiceException(f"Unsupported operation: {operation}")
+
+        self._session.add_all(db_items)
         if commit:
             self._safe_commit("Commit failed.")
 
@@ -252,14 +279,28 @@ class Service(Generic[TModel, TCreate, TUpdate, TPrimaryKey]):
         if item is None:
             raise NotFound(self._format_primary_key(pk))
 
-        changes = self._prepare_for_update(data)
-        for key, value in changes.items():
-            setattr(item, key, value)
-
+        self._apply_changes_to_item(item, data)
         session.add(item)
         self._safe_commit(f"Failed to update {self._format_primary_key(pk)}.")
 
         session.refresh(item)
+        return item
+
+    def _apply_changes_to_item(self, item: TModel, data: TUpdate) -> TModel:
+        """
+        Applies the given changes to the given item without committing anything.
+
+        Arguments:
+            item: The item to update.
+            data: The changes to make to `item`.
+
+        Returns:
+            The received item.
+        """
+        changes = self._prepare_for_update(data)
+        for key, value in changes.items():
+            setattr(item, key, value)
+
         return item
 
     def _format_primary_key(self, pk: TPrimaryKey) -> str:

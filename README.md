@@ -1,3 +1,12 @@
+![Tests](https://github.com/volfpeter/sqlmodelservice/actions/workflows/tests.yml/badge.svg)
+![Linters](https://github.com/volfpeter/sqlmodelservice/actions/workflows/linters.yml/badge.svg)
+![Documentation](https://github.com/volfpeter/sqlmodelservice/actions/workflows/build-docs.yml/badge.svg)
+![PyPI package](https://img.shields.io/pypi/v/sqlmodelservice?color=%2334D058&label=PyPI%20Package)
+
+**Source code**: [https://github.com/volfpeter/sqlmodelservice](https://github.com/volfpeter/sqlmodelservice)
+
+**Documentation and examples**: [https://volfpeter.github.io/sqlmodelservice](https://volfpeter.github.io/sqlmodelservice/)
+
 # SQLModelService
 
 `SQLModelService` is a generic service layer on top of [SQLModel](https://sqlmodel.tiangolo.com/) for conveniently creating APIs with frameworks like [FastAPI](https://fastapi.tiangolo.com/).
