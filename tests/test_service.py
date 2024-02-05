@@ -1,3 +1,5 @@
+from collections.abc import Generator
+
 import pytest
 from sqlalchemy import Engine
 from sqlmodel import Session
@@ -11,7 +13,7 @@ def service(session: Session) -> PlayerService:
 
 
 @pytest.fixture(scope="module")
-def query_session(engine: Engine) -> Session:
+def query_session(engine: Engine) -> Generator[Session, None, None]:
     """Secondary session only for querying data."""
     with Session(engine) as session:
         yield session
