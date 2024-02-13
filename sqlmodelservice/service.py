@@ -1,9 +1,9 @@
 from collections.abc import Iterable, Mapping, Sequence
 from typing import Any, Generic, Literal, Type, TypeVar, cast, overload
 
-from sqlalchemy.engine.result import ScalarResult
+from sqlalchemy.engine.result import ScalarResult, TupleResult
 from sqlmodel import Session, SQLModel, select
-from sqlmodel.sql.expression import SelectOfScalar
+from sqlmodel.sql.expression import Select, SelectOfScalar
 
 AtomicPrimaryKey = int | str
 PrimaryKey = AtomicPrimaryKey | tuple[AtomicPrimaryKey, ...] | list[AtomicPrimaryKey] | Mapping[str, AtomicPrimaryKey]
@@ -169,7 +169,15 @@ class Service(Generic[TModel, TCreate, TUpdate, TPrimaryKey]):
         session.delete(item)
         self._safe_commit("Failed to delete item.")
 
+    @overload
+    def exec(self, statement: Select[T]) -> TupleResult[T]:
+        ...
+
+    @overload
     def exec(self, statement: SelectOfScalar[T]) -> ScalarResult[T]:
+        ...
+
+    def exec(self, statement: SelectOfScalar[T] | Select[T]) -> ScalarResult[T] | TupleResult[T]:
         """
         Executes the given statement.
         """
