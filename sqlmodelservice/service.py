@@ -13,6 +13,8 @@ TM_1 = TypeVar("TM_1", bound=SQLModel)
 TM_2 = TypeVar("TM_2", bound=SQLModel)
 TM_3 = TypeVar("TM_3", bound=SQLModel)
 TM_4 = TypeVar("TM_4", bound=SQLModel)
+TM_5 = TypeVar("TM_5", bound=SQLModel)
+TM_6 = TypeVar("TM_6", bound=SQLModel)
 
 TModel = TypeVar("TModel", bound=SQLModel)
 TCreate = TypeVar("TCreate", bound=SQLModel)
@@ -231,6 +233,31 @@ class Service(Generic[TModel, TCreate, TUpdate, TPrimaryKey]):
         joined_4: Type[TM_4],
         /,
     ) -> SelectOfScalar[tuple[TModel, TM_1, TM_2, TM_3, TM_4]]:
+        ...
+
+    @overload
+    def select(
+        self,
+        joined_1: Type[TM_1],
+        joined_2: Type[TM_2],
+        joined_3: Type[TM_3],
+        joined_4: Type[TM_4],
+        joined_5: Type[TM_5],
+        /,
+    ) -> SelectOfScalar[tuple[TModel, TM_1, TM_2, TM_3, TM_4, TM_5]]:
+        ...
+
+    @overload
+    def select(
+        self,
+        joined_1: Type[TM_1],
+        joined_2: Type[TM_2],
+        joined_3: Type[TM_3],
+        joined_4: Type[TM_4],
+        joined_5: Type[TM_5],
+        joined_6: Type[TM_6],
+        /,
+    ) -> SelectOfScalar[tuple[TModel, TM_1, TM_2, TM_3, TM_4, TM_5, TM_6]]:
         ...
 
     def select(self, *joined: SQLModel) -> SelectOfScalar[SQLModel]:  # type: ignore[misc]
