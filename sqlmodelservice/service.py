@@ -1,7 +1,9 @@
 from collections.abc import Iterable, Mapping, Sequence
 from typing import Any, Generic, Literal, Type, TypeVar, cast, overload
 
+from sqlalchemy import exc as sa_exc
 from sqlalchemy.engine.result import ScalarResult, TupleResult
+from sqlalchemy.sql.elements import ColumnElement
 from sqlmodel import Session, SQLModel, select
 from sqlmodel.sql.expression import Select, SelectOfScalar
 
@@ -35,7 +37,13 @@ class CommitFailed(ServiceException):
 
 
 class NotFound(ServiceException):
-    """Raise by services when an item is not found."""
+    """Raise by the service when an item is not found."""
+
+    ...
+
+
+class MultipleResultsFound(ServiceException):
+    """Raised by the service when multiple results were found but at most one was expected."""
 
     ...
 
@@ -134,6 +142,29 @@ class Service(Generic[TModel, TCreate, TUpdate, TPrimaryKey]):
 
         return db_items
 
+    def all(
+        self,
+        where: ColumnElement[bool] | bool | None = None,
+        *,
+        order_by: Sequence[ColumnElement[Any]] | None = None,
+    ) -> Sequence[TModel]:
+        """
+        Returns all items that match the given where clause.
+
+        Arguments:
+            where: An optional where clause for the query.
+            order_by: An optional sequence of order by clauses.
+        """
+        stmt = self.select()
+
+        if where is not None:
+            stmt = stmt.where(where)
+
+        if order_by:
+            stmt = stmt.order_by(*order_by)
+
+        return self.exec(stmt).all()
+
     def create(self, data: TCreate) -> TModel:
         """
         Creates a new database entry from the given data.
@@ -188,6 +219,8 @@ class Service(Generic[TModel, TCreate, TUpdate, TPrimaryKey]):
     def get_all(self) -> Sequence[TModel]:
         """
         Returns all items from the database.
+
+        Deprecated. Use `all()` instead.
         """
         return self._session.exec(select(self._model)).all()
 
@@ -199,6 +232,45 @@ class Service(Generic[TModel, TCreate, TUpdate, TPrimaryKey]):
             pk: The primary key.
         """
         return self._session.get(self._model, pk)
+
+    def one(
+        self,
+        where: ColumnElement[bool] | bool,
+    ) -> TModel:
+        """
+        Returns item that matches the given where clause.
+
+        Arguments:
+            where: The where clause of the query.
+
+        Raises:
+            MultipleResultsFound: If multiple items match the where clause.
+            NotFound: If no items match the where clause.
+        """
+        try:
+            return self.exec(self.select().where(where)).one()
+        except sa_exc.MultipleResultsFound as e:
+            raise MultipleResultsFound("Multiple items matched the where clause.") from e
+        except sa_exc.NoResultFound as e:
+            raise NotFound("No items matched the where clause") from e
+
+    def one_or_none(
+        self,
+        where: ColumnElement[bool] | bool,
+    ) -> TModel | None:
+        """
+        Returns item that matches the given where clause, if there is such an item.
+
+        Arguments:
+            where: The where clause of the query.
+
+        Raises:
+            MultipleResultsFound: If multiple items match the where clause.
+        """
+        try:
+            return self.exec(self.select().where(where)).one_or_none()
+        except sa_exc.MultipleResultsFound as e:
+            raise MultipleResultsFound("Multiple items matched the where clause.") from e
 
     def refresh(self, instance: TModel) -> None:
         """

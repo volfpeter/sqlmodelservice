@@ -2,7 +2,9 @@ from collections.abc import Generator
 
 import pytest
 from sqlalchemy import Engine
-from sqlmodel import Session
+from sqlmodel import Session, col
+
+from sqlmodelservice import MultipleResultsFound, NotFound
 
 from .database.player import DbPlayer, PlayerCreate, PlayerService, PlayerUpdate
 
@@ -26,6 +28,27 @@ def query_service(query_session: Session) -> PlayerService:
 
 
 class TestAddToSession:
+    def test_all(self, service: PlayerService) -> None:
+        service.add_to_session(
+            (PlayerCreate(name="First"), PlayerCreate(name="Second")),
+            operation="create",
+            commit=True,
+        )
+
+        result = service.all(col(DbPlayer.name) == "First")
+        assert len(result) == 1
+        assert result[0].name == "First"
+
+        result = service.all(order_by=(col(DbPlayer.name).desc(),))
+        assert len(result) == 2
+        assert result[0].name == "Second"
+        assert result[1].name == "First"
+
+        for player in service.all():
+            service.delete_by_pk(player.id)  # type: ignore[arg-type]
+
+        assert len(service.get_all()) == 0
+
     def test_create(self, service: PlayerService, query_service: PlayerService) -> None:
         service.add_to_session(
             (PlayerCreate(name="First"), PlayerCreate(name="Second")),
@@ -82,3 +105,45 @@ class TestAddToSession:
             service.delete_by_pk(player.id)  # type: ignore[arg-type]
 
         assert len(query_service.get_all()) == 0
+
+    def test_one(self, service: PlayerService) -> None:
+        service.add_to_session(
+            (PlayerCreate(name="First"), PlayerCreate(name="Second")),
+            operation="create",
+            commit=True,
+        )
+
+        result = service.one(col(DbPlayer.name) == "First")
+        assert result.name == "First"
+
+        with pytest.raises(NotFound):
+            service.one(col(DbPlayer.name) == "Does Not Exist")
+
+        with pytest.raises(MultipleResultsFound):
+            service.one(True)
+
+        for player in service.all():
+            service.delete_by_pk(player.id)  # type: ignore[arg-type]
+
+        assert len(service.get_all()) == 0
+
+    def test_one_or_none(self, service: PlayerService) -> None:
+        service.add_to_session(
+            (PlayerCreate(name="First"), PlayerCreate(name="Second")),
+            operation="create",
+            commit=True,
+        )
+
+        result = service.one_or_none(col(DbPlayer.name) == "First")
+        assert result is not None
+        assert result.name == "First"
+
+        assert service.one_or_none(col(DbPlayer.name) == "Does Not Exist") is None
+
+        with pytest.raises(MultipleResultsFound):
+            service.one_or_none(True)
+
+        for player in service.all():
+            service.delete_by_pk(player.id)  # type: ignore[arg-type]
+
+        assert len(service.get_all()) == 0
