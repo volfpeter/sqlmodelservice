@@ -46,3 +46,5 @@ nav:
       - fastapi-example.md
   - API Reference:
       - api-service.md
+      - api-utils.md
+      - Errors: api-errors.md

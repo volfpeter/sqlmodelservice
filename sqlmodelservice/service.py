@@ -7,6 +7,9 @@ from sqlalchemy.sql.elements import ColumnElement
 from sqlmodel import Session, SQLModel, select
 from sqlmodel.sql.expression import Select, SelectOfScalar
 
+from .errors import MultipleResultsFound, NotFound, ServiceException
+from .utils import safe_commit
+
 AtomicPrimaryKey = int | str
 PrimaryKey = AtomicPrimaryKey | tuple[AtomicPrimaryKey, ...] | list[AtomicPrimaryKey] | Mapping[str, AtomicPrimaryKey]
 
@@ -22,30 +25,6 @@ TModel = TypeVar("TModel", bound=SQLModel)
 TCreate = TypeVar("TCreate", bound=SQLModel)
 TUpdate = TypeVar("TUpdate", bound=SQLModel)
 TPrimaryKey = TypeVar("TPrimaryKey", bound=PrimaryKey)
-
-
-class ServiceException(Exception):
-    """Base exception raise by services."""
-
-    ...
-
-
-class CommitFailed(ServiceException):
-    """Raise by the service when a commit fails."""
-
-    ...
-
-
-class NotFound(ServiceException):
-    """Raise by the service when an item is not found."""
-
-    ...
-
-
-class MultipleResultsFound(ServiceException):
-    """Raised by the service when multiple results were found but at most one was expected."""
-
-    ...
 
 
 class Service(Generic[TModel, TCreate, TUpdate, TPrimaryKey]):
@@ -147,6 +126,8 @@ class Service(Generic[TModel, TCreate, TUpdate, TPrimaryKey]):
         where: ColumnElement[bool] | bool | None = None,
         *,
         order_by: Sequence[ColumnElement[Any]] | None = None,
+        limit: int | None = None,
+        offset: int | None = None,
     ) -> Sequence[TModel]:
         """
         Returns all items that match the given where clause.
@@ -154,14 +135,22 @@ class Service(Generic[TModel, TCreate, TUpdate, TPrimaryKey]):
         Arguments:
             where: An optional where clause for the query.
             order_by: An optional sequence of order by clauses.
+            limit: An optional limit for the number of items to return.
+            offset: The number of items to skip.
         """
         stmt = self.select()
 
         if where is not None:
             stmt = stmt.where(where)
 
-        if order_by:
+        if order_by is not None:
             stmt = stmt.order_by(*order_by)
+
+        if limit is not None:
+            stmt = stmt.limit(limit)
+
+        if offset is not None:
+            stmt = stmt.offset(offset)
 
         return self.exec(stmt).all()
 
@@ -378,17 +367,32 @@ class Service(Generic[TModel, TCreate, TUpdate, TPrimaryKey]):
 
         Raises:
             CommitFailed: If the service fails to commit the operation.
-            NotFound: If the document with the given primary key does not exist.
+            NotFound: If the record with the given primary key does not exist.
         """
-        session = self._session
-
         item = self.get_by_pk(pk)
         if item is None:
             raise NotFound(self._format_primary_key(pk))
 
+        return self.update_item(item, data)
+
+    def update_item(self, item: TModel, data: TUpdate) -> TModel:
+        """
+        Updates the given item.
+
+        The same as `update()` but without data fetching.
+
+        Arguments:
+            item: The item to update.
+            data: Update data.
+
+        Raises:
+            CommitFailed: If the service fails to commit the operation.
+            NotFound: If the record with the given primary key does not exist.
+        """
+        session = self._session
         self._apply_changes_to_item(item, data)
         session.add(item)
-        self._safe_commit(f"Failed to update {self._format_primary_key(pk)}.")
+        self._safe_commit("Update failed.")
 
         session.refresh(item)
         return item
@@ -460,10 +464,8 @@ class Service(Generic[TModel, TCreate, TUpdate, TPrimaryKey]):
 
         Arguments:
             error_msg: The message for the raised exception.
+
+        Raises:
+            CommitFailed: If committing the session failed.
         """
-        session = self._session
-        try:
-            session.commit()
-        except Exception as e:
-            session.rollback()
-            raise CommitFailed(error_msg) from e
+        safe_commit(self._session, error_msg=error_msg)

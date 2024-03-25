@@ -1,5 +1,5 @@
-# Service
+# `Service`
 
-::: sqlmodelservice.service
+::: sqlmodelservice.Service
     options:
         filters: None
