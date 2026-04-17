@@ -1,5 +1,4 @@
-![Tests](https://github.com/volfpeter/sqlmodelservice/actions/workflows/tests.yml/badge.svg)
-![Linters](https://github.com/volfpeter/sqlmodelservice/actions/workflows/linters.yml/badge.svg)
+![Checks](https://github.com/volfpeter/sqlmodelservice/actions/workflows/checks.yml/badge.svg)
 ![Documentation](https://github.com/volfpeter/sqlmodelservice/actions/workflows/build-docs.yml/badge.svg)
 ![PyPI package](https://img.shields.io/pypi/v/sqlmodelservice?color=%2334D058&label=PyPI%20Package)
 
