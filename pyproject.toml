@@ -1,54 +1,52 @@
 [project]
 name = "sqlmodelservice"
+description = "A generic service layer on top of SQLModel for conveniently creating APIs with frameworks like FastAPI."
 readme = "README.md"
+requires-python = ">=3.10"
+authors = [{ name = "Peter Volf", email = "do.volfp@gmail.com" }]
+dynamic = ["version"]
 license = { text = "MIT" }
-classifiers = [
-    "Intended Audience :: Information Technology",
-    "Operating System :: OS Independent",
-    "Programming Language :: Python :: 3",
-    "Development Status :: 4 - Beta",
-    "Topic :: Internet",
-    "Topic :: Software Development :: Libraries",
-    "Topic :: Software Development",
-    "Typing :: Typed",
-    "Environment :: Web Environment",
-    "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
-    "Topic :: Database",
-    "Topic :: Internet :: WWW/HTTP",
+dependencies = [
+    "pydantic>=2.11",
+    "sqlmodel>=0.0.38,<0.1",
 ]
+
+[dependency-groups]
+dev = [
+    "mkdocstrings>=1.0.4",
+    "mkdocstrings-python>=2.0.3",
+    "mypy>=1.20.1",
+    "poethepoet>=0.44.0",
+    "psycopg>=3.3.3",
+    "pytest>=9.0.3",
+    "pytest-random-order>=1.2.0",
+    "ruff>=0.15.10",
+    "testcontainers[postgres]>=4.14.2",
+    "zensical>=0.0.33",
+]
+
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
 
 [project.urls]
 Homepage = "https://github.com/volfpeter/sqlmodelservice"
 Documentation = "https://volfpeter.github.io/sqlmodelservice"
 
-[tool.poetry]
-name = "sqlmodelservice"
-version = "0.5.0"
-description = "A generic service layer on top of SQLModel for conveniently creating APIs with frameworks like FastAPI."
-authors = ["Peter Volf <do.volfp@gmail.com>"]
-readme = "README.md"
-packages = [{include = "sqlmodelservice"}]
-
-[tool.poetry.dependencies]
-python = "^3.10"
-sqlmodel = ">=0.0.14,<0.1"
-
-[tool.poetry.group.dev.dependencies]
-mkdocs-material = "^9.5.6"
-mkdocstrings = {extras = ["python"], version = "^0.24.0"}
-mypy = "^1.8.0"
-poethepoet = "^0.24.4"
-ruff = "^0.2.0"
-pytest = "^8.0.0"
-pytest-docker = "^3.1.1"
-pytest-random-order = "^1.1.1"
-psycopg2 = "^2.9.9"
-types-psycopg2 = "^2.9.21.20240201"
-
 [tool.mypy]
 strict = true
 show_error_codes = true
+
+[tool.pdm.version]
+source = "file"
+path = "sqlmodelservice/__init__.py"
+
+[tool.pyright]
+venvPath = "."
+venv = ".venv"
+
+[tool.pytest.ini_options]
+addopts = "--random-order"
 
 [tool.ruff]
 line-length = 118
@@ -61,9 +59,7 @@ exclude = [
     "dist",
     "docs",
 ]
-
-[tool.ruff.lint]
-select = [
+lint.select = [
     "E",  # pycodestyle errors
     "W",  # pycodestyle warnings
     "F",  # pyflakes
@@ -77,17 +73,17 @@ select = [
 "tests/**/*" = ["S101"]  # S101: use of assert detected
 
 [tool.poe.tasks]
-serve-docs = "mkdocs serve"
-check-format = "ruff format --check ."
+serve-docs = "zensical serve"
+
+format = "ruff format . --check"
+format-fix = "ruff format ."
+
 lint = "ruff check ."
+lint-fix = "ruff check . --fix"
+
 mypy = "mypy ."
-format = "ruff format ."
-lint-fix = "ruff . --fix"
-test = "python -m pytest tests --random-order"
 
-static-checks.sequence = ["lint", "check-format", "mypy"]
-static-checks.ignore_fail = "return_non_zero"
+check.sequence = ["format", "lint", "mypy"]
+check.ignore_fail = "return_non_zero"
 
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+test = "python -m pytest tests"
