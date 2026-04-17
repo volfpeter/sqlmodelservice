@@ -15,8 +15,7 @@ class DbPlayer(PlayerBase, table=True):
     id: int | None = Field(default=None, primary_key=True)
 
 
-class PlayerCreate(PlayerBase):
-    ...
+class PlayerCreate(PlayerBase): ...
 
 
 class PlayerRead(PlayerBase):

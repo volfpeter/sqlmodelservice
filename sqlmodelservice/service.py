@@ -1,6 +1,7 @@
 from collections.abc import Iterable, Mapping, Sequence
 from typing import Any, Generic, Literal, Type, TypeVar, cast, overload
 
+from pydantic import BaseModel
 from sqlalchemy import exc as sa_exc
 from sqlalchemy.engine.result import ScalarResult, TupleResult
 from sqlalchemy.sql.elements import ColumnElement
@@ -22,8 +23,8 @@ TM_5 = TypeVar("TM_5", bound=SQLModel)
 TM_6 = TypeVar("TM_6", bound=SQLModel)
 
 TModel = TypeVar("TModel", bound=SQLModel)
-TCreate = TypeVar("TCreate", bound=SQLModel)
-TUpdate = TypeVar("TUpdate", bound=SQLModel)
+TCreate = TypeVar("TCreate", bound=BaseModel)
+TUpdate = TypeVar("TUpdate", bound=BaseModel)
 TPrimaryKey = TypeVar("TPrimaryKey", bound=PrimaryKey)
 
 
@@ -68,14 +69,12 @@ class Service(Generic[TModel, TCreate, TUpdate, TPrimaryKey]):
     @overload
     def add_to_session(
         self, items: Iterable[TCreate], *, commit: bool = False, operation: Literal["create"]
-    ) -> list[TModel]:
-        ...
+    ) -> list[TModel]: ...
 
     @overload
     def add_to_session(
         self, items: Iterable[tuple[TModel, TUpdate]], *, commit: bool = False, operation: Literal["update"]
-    ) -> list[TModel]:
-        ...
+    ) -> list[TModel]: ...
 
     def add_to_session(
         self,
@@ -192,12 +191,10 @@ class Service(Generic[TModel, TCreate, TUpdate, TPrimaryKey]):
         self._safe_commit("Failed to delete item.")
 
     @overload
-    def exec(self, statement: Select[T]) -> TupleResult[T]:
-        ...
+    def exec(self, statement: Select[T]) -> TupleResult[T]: ...
 
     @overload
-    def exec(self, statement: SelectOfScalar[T]) -> ScalarResult[T]:
-        ...
+    def exec(self, statement: SelectOfScalar[T]) -> ScalarResult[T]: ...
 
     def exec(self, statement: SelectOfScalar[T] | Select[T]) -> ScalarResult[T] | TupleResult[T]:
         """
@@ -268,22 +265,18 @@ class Service(Generic[TModel, TCreate, TUpdate, TPrimaryKey]):
         self._session.refresh(instance)
 
     @overload
-    def select(self) -> SelectOfScalar[TModel]:
-        ...
+    def select(self) -> SelectOfScalar[TModel]: ...
 
     @overload
-    def select(self, joined_1: Type[TM_1], /) -> SelectOfScalar[tuple[TModel, TM_1]]:
-        ...
+    def select(self, joined_1: Type[TM_1], /) -> SelectOfScalar[tuple[TModel, TM_1]]: ...
 
     @overload
-    def select(self, joined_1: Type[TM_1], joined_2: Type[TM_2], /) -> SelectOfScalar[tuple[TModel, TM_1, TM_2]]:
-        ...
+    def select(self, joined_1: Type[TM_1], joined_2: Type[TM_2], /) -> SelectOfScalar[tuple[TModel, TM_1, TM_2]]: ...
 
     @overload
     def select(
         self, joined_1: Type[TM_1], joined_2: Type[TM_2], joined_3: Type[TM_3], /
-    ) -> SelectOfScalar[tuple[TModel, TM_1, TM_2, TM_3]]:
-        ...
+    ) -> SelectOfScalar[tuple[TModel, TM_1, TM_2, TM_3]]: ...
 
     @overload
     def select(
@@ -293,8 +286,7 @@ class Service(Generic[TModel, TCreate, TUpdate, TPrimaryKey]):
         joined_3: Type[TM_3],
         joined_4: Type[TM_4],
         /,
-    ) -> SelectOfScalar[tuple[TModel, TM_1, TM_2, TM_3, TM_4]]:
-        ...
+    ) -> SelectOfScalar[tuple[TModel, TM_1, TM_2, TM_3, TM_4]]: ...
 
     @overload
     def select(
@@ -305,8 +297,7 @@ class Service(Generic[TModel, TCreate, TUpdate, TPrimaryKey]):
         joined_4: Type[TM_4],
         joined_5: Type[TM_5],
         /,
-    ) -> SelectOfScalar[tuple[TModel, TM_1, TM_2, TM_3, TM_4, TM_5]]:
-        ...
+    ) -> SelectOfScalar[tuple[TModel, TM_1, TM_2, TM_3, TM_4, TM_5]]: ...
 
     @overload
     def select(
@@ -318,8 +309,7 @@ class Service(Generic[TModel, TCreate, TUpdate, TPrimaryKey]):
         joined_5: Type[TM_5],
         joined_6: Type[TM_6],
         /,
-    ) -> SelectOfScalar[tuple[TModel, TM_1, TM_2, TM_3, TM_4, TM_5, TM_6]]:
-        ...
+    ) -> SelectOfScalar[tuple[TModel, TM_1, TM_2, TM_3, TM_4, TM_5, TM_6]]: ...
 
     def select(self, *joined: SQLModel) -> SelectOfScalar[SQLModel]:  # type: ignore[misc]
         """

@@ -1,3 +1,5 @@
+__version__ = "0.6.0"
+
 from .errors import CommitFailed as CommitFailed
 from .errors import MultipleResultsFound as MultipleResultsFound
 from .errors import NotFound as NotFound
